@@ -29,8 +29,6 @@ interface MovieDao {
 
     /**
      * Search for movies by actor name.
-     * Since actors is now a JSON array in the database, we need to use a special query
-     * that searches within the JSON string representation.
      * The search is case insensitive and matches partial strings.
      */
     @Query("SELECT * FROM movies WHERE actors LIKE '%' || :actorName || '%' COLLATE NOCASE")

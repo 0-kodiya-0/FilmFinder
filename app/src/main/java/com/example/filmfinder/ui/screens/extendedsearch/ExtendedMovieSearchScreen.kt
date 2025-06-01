@@ -64,21 +64,6 @@ fun ExtendedMovieSearchScreen(
     // Check orientation
     val isLandscape = isInLandscapeMode()
 
-    // Clear image cache when leaving this screen
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_DESTROY) {
-                ImageCacheManager.clearScreenCache("extended_search_screen")
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     // Update search query from filter when changed
     LaunchedEffect(filter.searchTerm) {
         if (filter.searchTerm.isNotEmpty() && searchQuery != filter.searchTerm) {

@@ -52,21 +52,6 @@ fun ActorSearchScreen(
     // Check orientation
     val isLandscape = isInLandscapeMode()
 
-    // Clear image cache when leaving this screen
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_DESTROY) {
-                ImageCacheManager.clearScreenCache("actor_search_screen")
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
     Scaffold(
         topBar = {
             AppBar(

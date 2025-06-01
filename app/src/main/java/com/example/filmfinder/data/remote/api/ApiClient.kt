@@ -1,6 +1,7 @@
 package com.example.filmfinder.data.remote.api
 
 import android.util.Log
+import com.example.filmfinder.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -15,11 +16,10 @@ import java.net.URLEncoder
  */
 object ApiClient {
     // Base URL for the OMDb API
-    private const val BASE_URL = "https://www.omdbapi.com/"
+    private const val BASE_URL = BuildConfig.OMDB_BASE_URL;
 
-    // API key for the OMDb API
-    // TODO: Replace with your own API key
-    const val API_KEY = "4b324f15"
+    // API key for the OMDb API - loaded from BuildConfig
+    private val API_KEY = BuildConfig.OMDB_API_KEY
 
     /**
      * Make a GET request to the OMDb API with enhanced filter options.
