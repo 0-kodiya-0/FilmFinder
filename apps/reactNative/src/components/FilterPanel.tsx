@@ -7,7 +7,6 @@ import {
     StyleSheet,
     Switch,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { MovieFilter } from '../data/models';
 
 interface FilterPanelProps {
@@ -15,15 +14,13 @@ interface FilterPanelProps {
     onFilterChange: (filter: MovieFilter) => void;
     onApplyFilter: () => void;
     expanded?: boolean;
-    onToggleExpanded?: () => void;
 }
 
 const FilterPanel: React.FC<FilterPanelProps> = ({
     filter,
     onFilterChange,
     onApplyFilter,
-    expanded = true,
-    onToggleExpanded,
+    expanded = true
 }) => {
     const [yearText, setYearText] = useState(filter.year?.toString() || '');
 
@@ -40,57 +37,39 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
     };
 
     return (
-        <View style={styles.container}>
-            {onToggleExpanded && (
-                <TouchableOpacity
-                    style={styles.header}
-                    onPress={onToggleExpanded}
-                >
-                    <View style={styles.headerContent}>
-                        <Ionicons name="options" size={20} color="#1565C0" />
-                        <Text style={styles.headerText}>Search Filters</Text>
-                        <Ionicons
-                            name={expanded ? "chevron-up" : "chevron-down"}
-                            size={20}
-                            color="#666"
-                        />
-                    </View>
-                </TouchableOpacity>
-            )}
-
-            {expanded && (
-                <View style={styles.content}>
-                    {/* Year Filter */}
-                    <View style={styles.filterSection}>
-                        <Text style={styles.filterLabel}>Year</Text>
-                        <TextInput
-                            style={styles.textInput}
-                            value={yearText}
-                            onChangeText={handleYearChange}
-                            placeholder="Enter year (optional)"
-                            keyboardType="numeric"
-                            maxLength={4}
-                        />
-                    </View>
-
-                    {/* Include Ratings Filter */}
-                    <View style={styles.switchSection}>
-                        <Text style={styles.switchLabel}>Include Ratings</Text>
-                        <Switch
-                            value={filter.includeRatings || false}
-                            onValueChange={handleIncludeRatingsChange}
-                            trackColor={{ false: '#E0E0E0', true: '#90CAF9' }}
-                            thumbColor={filter.includeRatings ? '#1565C0' : '#fff'}
-                        />
-                    </View>
-
-                    {/* Apply Button */}
-                    <TouchableOpacity style={styles.applyButton} onPress={onApplyFilter}>
-                        <Text style={styles.applyButtonText}>Apply Filters</Text>
-                    </TouchableOpacity>
+        expanded ?
+            <View style={styles.container}>
+                {/* Year Filter */}
+                <View style={styles.filterSection}>
+                    <Text style={styles.filterLabel}>Year</Text>
+                    <TextInput
+                        style={styles.textInput}
+                        value={yearText}
+                        onChangeText={handleYearChange}
+                        placeholder="Enter year (optional)"
+                        keyboardType="numeric"
+                        maxLength={4}
+                    />
                 </View>
-            )}
-        </View>
+
+                {/* Include Ratings Filter */}
+                <View style={styles.switchSection}>
+                    <Text style={styles.switchLabel}>Include Ratings</Text>
+                    <Switch
+                        value={filter.includeRatings || false}
+                        onValueChange={handleIncludeRatingsChange}
+                        trackColor={{ false: '#E0E0E0', true: '#90CAF9' }}
+                        thumbColor={filter.includeRatings ? '#1565C0' : '#fff'}
+                    />
+                </View>
+
+                {/* Apply Button */}
+                <TouchableOpacity style={styles.applyButton} onPress={onApplyFilter}>
+                    <Text style={styles.applyButtonText}>Apply Filters</Text>
+                </TouchableOpacity>
+            </View>
+            :
+            <></>
     );
 };
 
@@ -100,29 +79,12 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
         marginVertical: 8,
         borderRadius: 12,
+        padding: 16,
         elevation: 4,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-    },
-    header: {
-        padding: 16,
-    },
-    headerContent: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    headerText: {
-        flex: 1,
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#333',
-        marginLeft: 8,
-    },
-    content: {
-        padding: 16,
-        paddingTop: 0,
     },
     filterSection: {
         marginBottom: 16,

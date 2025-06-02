@@ -4,10 +4,11 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import AppBar from './AppBar';
+import { useOrientation } from '../hooks/useOrientation';
 
 interface NetworkErrorScreenProps {
     onRetry: () => void;
@@ -18,30 +19,70 @@ const NetworkErrorScreen: React.FC<NetworkErrorScreenProps> = ({
     onRetry,
     onNavigateBack,
 }) => {
+    const { isLandscape } = useOrientation();
+
+    // Debug log
+    console.log('NetworkErrorScreen orientation:', { isLandscape });
+
+    const ErrorIcon = () => (
+        <Ionicons
+            name="warning"
+            size={isLandscape ? 60 : 80}
+            color="#f44336"
+        />
+    );
+
+    const ErrorContent = () => (
+        <View style={[styles.errorContent, isLandscape && styles.landscapeErrorContent]}>
+            <Text style={[styles.title, isLandscape && styles.landscapeTitle]}>
+                No Internet Connection
+            </Text>
+
+            <Text style={[styles.message, isLandscape && styles.landscapeMessage]}>
+                Please check your network connection and try again.
+            </Text>
+
+            <View style={[styles.buttonContainer, isLandscape && styles.landscapeButtonContainer]}>
+                <TouchableOpacity
+                    style={[styles.retryButton, isLandscape && styles.landscapeRetryButton]}
+                    onPress={onRetry}
+                >
+                    <Ionicons name="refresh" size={20} color="#fff" />
+                    <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    style={[styles.reportButton, isLandscape && styles.landscapeReportButton]}
+                >
+                    <Ionicons name="send" size={20} color="#1565C0" />
+                    <Text style={styles.reportButtonText}>Report Issue</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
     return (
         <SafeAreaView style={styles.container}>
             {onNavigateBack && (
                 <AppBar title="" onBackPress={onNavigateBack} />
             )}
 
-            <View style={styles.content}>
-                <Ionicons name="warning" size={80} color="#f44336" />
-
-                <Text style={styles.title}>No Internet Connection</Text>
-
-                <Text style={styles.message}>
-                    Please check your network connection and try again.
-                </Text>
-
-                <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-                    <Ionicons name="refresh" size={20} color="#fff" />
-                    <Text style={styles.retryButtonText}>Retry</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.reportButton}>
-                    <Ionicons name="send" size={20} color="#1565C0" />
-                    <Text style={styles.reportButtonText}>Report Issue</Text>
-                </TouchableOpacity>
+            <View key={`network-error-${isLandscape}`} style={styles.content}>
+                {isLandscape ? (
+                    <View style={styles.landscapeLayout}>
+                        <View style={styles.landscapeLeft}>
+                            <ErrorIcon />
+                        </View>
+                        <View style={styles.landscapeRight}>
+                            <ErrorContent />
+                        </View>
+                    </View>
+                ) : (
+                    <View style={styles.portraitLayout}>
+                        <ErrorIcon />
+                        <ErrorContent />
+                    </View>
+                )}
             </View>
         </SafeAreaView>
     );
@@ -54,9 +95,34 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        padding: 24,
+    },
+    portraitLayout: {
+        flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 24,
+    },
+    landscapeLayout: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    landscapeLeft: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    landscapeRight: {
+        flex: 2,
+        paddingLeft: 32,
+    },
+    errorContent: {
+        alignItems: 'center',
+        width: '100%',
+    },
+    landscapeErrorContent: {
+        alignItems: 'flex-start', // Align left in landscape
     },
     title: {
         fontSize: 24,
@@ -64,6 +130,13 @@ const styles = StyleSheet.create({
         color: '#333',
         marginTop: 24,
         marginBottom: 16,
+        textAlign: 'center',
+    },
+    landscapeTitle: {
+        fontSize: 20,
+        marginTop: 0,
+        marginBottom: 12,
+        textAlign: 'left',
     },
     message: {
         fontSize: 16,
@@ -71,6 +144,20 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         lineHeight: 24,
         marginBottom: 32,
+    },
+    landscapeMessage: {
+        fontSize: 14,
+        textAlign: 'left',
+        marginBottom: 24,
+    },
+    buttonContainer: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    landscapeButtonContainer: {
+        alignItems: 'flex-start',
+        flexDirection: 'row',
+        flexWrap: 'wrap',
     },
     retryButton: {
         flexDirection: 'row',
@@ -82,6 +169,11 @@ const styles = StyleSheet.create({
         marginBottom: 16,
         minWidth: 200,
         justifyContent: 'center',
+    },
+    landscapeRetryButton: {
+        minWidth: 140,
+        marginRight: 16,
+        marginBottom: 8,
     },
     retryButtonText: {
         color: '#1565C0',
@@ -99,6 +191,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         minWidth: 200,
         justifyContent: 'center',
+    },
+    landscapeReportButton: {
+        minWidth: 140,
+        marginBottom: 8,
     },
     reportButtonText: {
         color: '#1565C0',

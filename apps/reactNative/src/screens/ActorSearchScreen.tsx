@@ -4,11 +4,10 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     FlatList,
     ScrollView,
-    Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AppBar from '../components/AppBar';
@@ -19,10 +18,13 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import ErrorMessage from '../components/ErrorMessage';
 import FloatingSnackbar from '../components/FloatingSnackbar';
 import { useActorSearch } from '../hooks/useActorSearch';
+import { useOrientation } from '../hooks/useOrientation';
 import { Movie } from '../data/models';
 
 const ActorSearchScreen: React.FC = () => {
     const navigation = useNavigation();
+    const { isLandscape } = useOrientation(); // Add orientation detection
+
     const {
         movies,
         isLoading,
@@ -37,8 +39,8 @@ const ActorSearchScreen: React.FC = () => {
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
-    const { width, height } = Dimensions.get('window');
-    const isLandscape = width > height;
+    // Debug log
+    console.log('ActorSearchScreen orientation:', { isLandscape });
 
     const handleSearch = () => {
         if (!searchQuery.trim()) {
@@ -110,7 +112,7 @@ const ActorSearchScreen: React.FC = () => {
     };
 
     const renderSearchControls = () => (
-        <View>
+        <View style={isLandscape ? styles.landscapeControls : styles.portraitControls}>
             <SearchBar
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -144,25 +146,27 @@ const ActorSearchScreen: React.FC = () => {
                 }
             />
 
-            {isLandscape ? (
-                <View style={styles.landscapeLayout}>
-                    <View style={styles.landscapeControls}>
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {renderSearchControls()}
-                        </ScrollView>
+            <View key={`actor-search-${isLandscape}`} style={styles.content}>
+                {isLandscape ? (
+                    <View style={styles.landscapeLayout}>
+                        <View style={styles.landscapeLeft}>
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                {renderSearchControls()}
+                            </ScrollView>
+                        </View>
+                        <View style={styles.landscapeRight}>
+                            {renderContent()}
+                        </View>
                     </View>
-                    <View style={styles.landscapeContent}>
-                        {renderContent()}
+                ) : (
+                    <View style={styles.portraitLayout}>
+                        {renderSearchControls()}
+                        <View style={styles.portraitContent}>
+                            {renderContent()}
+                        </View>
                     </View>
-                </View>
-            ) : (
-                <View style={styles.portraitLayout}>
-                    {renderSearchControls()}
-                    <View style={styles.portraitContent}>
-                        {renderContent()}
-                    </View>
-                </View>
-            )}
+                )}
+            </View>
 
             <FloatingSnackbar
                 message={snackbarMessage}
@@ -178,8 +182,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FAFAFA',
     },
+    content: {
+        flex: 1,
+    },
     portraitLayout: {
         flex: 1,
+    },
+    portraitControls: {
+        // Portrait specific styles
     },
     portraitContent: {
         flex: 1,
@@ -188,13 +198,17 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
     },
-    landscapeControls: {
+    landscapeLeft: {
         flex: 1,
         paddingRight: 8,
+        maxWidth: '40%', // Limit controls width in landscape
     },
-    landscapeContent: {
+    landscapeRight: {
         flex: 2,
         paddingLeft: 8,
+    },
+    landscapeControls: {
+        // Landscape specific styles
     },
     resultsContainer: {
         flex: 1,

@@ -4,12 +4,11 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     FlatList,
     ScrollView,
-    Dimensions,
     ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AppBar from '../components/AppBar';
@@ -22,11 +21,14 @@ import FloatingSnackbar from '../components/FloatingSnackbar';
 import NetworkErrorScreen from '../components/NetworkErrorScreen';
 import { useExtendedSearch } from '../hooks/useExtendedSearch';
 import { useNetwork } from '../hooks/useNetwork';
+import { useOrientation } from '../hooks/useOrientation';
 import { MovieFilter, SearchItem } from '../data/models';
 
 const ExtendedSearchScreen: React.FC = () => {
     const navigation = useNavigation();
     const isNetworkAvailable = useNetwork();
+    const { isLandscape } = useOrientation(); // Add orientation detection
+
     const {
         searchResults,
         isLoading,
@@ -50,8 +52,8 @@ const ExtendedSearchScreen: React.FC = () => {
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
-    const { width, height } = Dimensions.get('window');
-    const isLandscape = width > height;
+    // Debug log
+    console.log('ExtendedSearchScreen orientation:', { isLandscape });
 
     // Handle movie saved message
     useEffect(() => {
@@ -211,7 +213,7 @@ const ExtendedSearchScreen: React.FC = () => {
     };
 
     const renderSearchControls = () => (
-        <View>
+        <View style={isLandscape ? styles.landscapeControls : styles.portraitControls}>
             <SearchBar
                 value={searchQuery}
                 onChangeText={(text) => {
@@ -222,13 +224,13 @@ const ExtendedSearchScreen: React.FC = () => {
                 placeholder="Enter movie title (min. 3 characters)"
             />
 
-            <FilterPanel
-                filter={panelFilter}
-                onFilterChange={setPanelFilter}
-                onApplyFilter={handleApplyFilter}
-                expanded={isFilterExpanded}
-                onToggleExpanded={() => setIsFilterExpanded(!isFilterExpanded)}
-            />
+            {isFilterExpanded && (
+                <FilterPanel
+                    filter={panelFilter}
+                    onFilterChange={setPanelFilter}
+                    onApplyFilter={handleApplyFilter}
+                />
+            )}
         </View>
     );
 
@@ -248,25 +250,27 @@ const ExtendedSearchScreen: React.FC = () => {
                 }
             />
 
-            {isLandscape ? (
-                <View style={styles.landscapeLayout}>
-                    <View style={styles.landscapeControls}>
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {renderSearchControls()}
-                        </ScrollView>
+            <View key={`extended-search-${isLandscape}`} style={styles.content}>
+                {isLandscape ? (
+                    <View style={styles.landscapeLayout}>
+                        <View style={styles.landscapeLeft}>
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                {renderSearchControls()}
+                            </ScrollView>
+                        </View>
+                        <View style={styles.landscapeRight}>
+                            {renderContent()}
+                        </View>
                     </View>
-                    <View style={styles.landscapeContent}>
-                        {renderContent()}
+                ) : (
+                    <View style={styles.portraitLayout}>
+                        {renderSearchControls()}
+                        <View style={styles.portraitContent}>
+                            {renderContent()}
+                        </View>
                     </View>
-                </View>
-            ) : (
-                <View style={styles.portraitLayout}>
-                    {renderSearchControls()}
-                    <View style={styles.portraitContent}>
-                        {renderContent()}
-                    </View>
-                </View>
-            )}
+                )}
+            </View>
 
             <FloatingSnackbar
                 message={snackbarMessage}
@@ -282,8 +286,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FAFAFA',
     },
+    content: {
+        flex: 1,
+    },
     portraitLayout: {
         flex: 1,
+    },
+    portraitControls: {
+        // Portrait specific styles
     },
     portraitContent: {
         flex: 1,
@@ -292,13 +302,17 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
     },
-    landscapeControls: {
+    landscapeLeft: {
         flex: 1,
         paddingRight: 8,
+        maxWidth: '40%', // Limit controls width in landscape
     },
-    landscapeContent: {
+    landscapeRight: {
         flex: 2,
         paddingLeft: 8,
+    },
+    landscapeControls: {
+        // Landscape specific styles
     },
     resultsContainer: {
         flex: 1,

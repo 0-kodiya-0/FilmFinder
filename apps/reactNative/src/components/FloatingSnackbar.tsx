@@ -5,8 +5,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     Animated,
-    Dimensions
 } from 'react-native';
+import { useOrientation } from '../hooks/useOrientation';
 
 interface FloatingSnackbarProps {
     message: string;
@@ -25,6 +25,10 @@ const FloatingSnackbar: React.FC<FloatingSnackbarProps> = ({
 }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const slideAnim = useRef(new Animated.Value(50)).current;
+    const { isLandscape, width, height } = useOrientation();
+
+    // Debug log
+    console.log('FloatingSnackbar orientation:', { isLandscape, width, height });
 
     useEffect(() => {
         if (visible) {
@@ -60,15 +64,44 @@ const FloatingSnackbar: React.FC<FloatingSnackbarProps> = ({
                 }),
             ]).start();
         }
-    }, [visible, fadeAnim, slideAnim, duration, onDismiss]);
+    }, [visible, fadeAnim, slideAnim, duration]);
 
     if (!visible) return null;
 
+    // Calculate positioning based on orientation
+    const getContainerStyle = () => {
+        const baseStyle = [
+            styles.container,
+            position === 'top' ? styles.top : styles.bottom,
+        ];
+
+        if (isLandscape) {
+            // In landscape, make snackbar more compact and positioned differently
+            return [
+                ...baseStyle,
+                styles.landscapeContainer,
+                position === 'top' ? styles.landscapeTop : styles.landscapeBottom,
+            ];
+        }
+
+        return baseStyle;
+    };
+
+    const getSnackbarStyle = () => {
+        const baseStyle = [styles.snackbar];
+
+        if (isLandscape) {
+            return [...baseStyle, styles.landscapeSnackbar];
+        }
+
+        return baseStyle;
+    };
+
     return (
         <Animated.View
+            key={`snackbar-${isLandscape}`} // Force re-render on orientation change
             style={[
-                styles.container,
-                position === 'top' ? styles.top : styles.bottom,
+                ...getContainerStyle(),
                 {
                     opacity: fadeAnim,
                     transform: [
@@ -83,11 +116,11 @@ const FloatingSnackbar: React.FC<FloatingSnackbarProps> = ({
                 },
             ]}
         >
-            <View style={styles.snackbar}>
-                <Text style={styles.message} numberOfLines={2}>
+            <View style={getSnackbarStyle()}>
+                <Text style={[styles.message, isLandscape && styles.landscapeMessage]} numberOfLines={isLandscape ? 1 : 2}>
                     {message}
                 </Text>
-                <TouchableOpacity onPress={onDismiss} style={styles.dismissButton}>
+                <TouchableOpacity onPress={onDismiss} style={[styles.dismissButton, isLandscape && styles.landscapeDismissButton]}>
                     <Text style={styles.dismissText}>Dismiss</Text>
                 </TouchableOpacity>
             </View>
@@ -108,6 +141,16 @@ const styles = StyleSheet.create({
     bottom: {
         bottom: 100,
     },
+    landscapeContainer: {
+        left: 32,
+        right: 32,
+    },
+    landscapeTop: {
+        top: 80, // Closer to top in landscape
+    },
+    landscapeBottom: {
+        bottom: 60, // Closer to bottom in landscape
+    },
     snackbar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -121,15 +164,28 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.3,
         shadowRadius: 6,
     },
+    landscapeSnackbar: {
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 6,
+    },
     message: {
         flex: 1,
         color: '#fff',
         fontSize: 14,
     },
+    landscapeMessage: {
+        fontSize: 13, // Smaller text in landscape
+    },
     dismissButton: {
         marginLeft: 12,
         paddingHorizontal: 8,
         paddingVertical: 4,
+    },
+    landscapeDismissButton: {
+        marginLeft: 8,
+        paddingHorizontal: 6,
+        paddingVertical: 2,
     },
     dismissText: {
         color: '#90CAF9',

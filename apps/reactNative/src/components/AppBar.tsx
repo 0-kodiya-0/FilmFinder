@@ -11,27 +11,25 @@ interface AppBarProps {
 
 const AppBar: React.FC<AppBarProps> = ({ title, onBackPress, rightActions }) => {
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
-            <View style={styles.container}>
-                <View style={styles.leftSection}>
-                    {onBackPress && (
-                        <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
-                            <Ionicons name="arrow-back" size={24} color="#333" />
-                        </TouchableOpacity>
-                    )}
-                </View>
-
-                <View style={styles.centerSection}>
-                    <Text style={styles.title} numberOfLines={1}>
-                        {title}
-                    </Text>
-                </View>
-
-                <View style={styles.rightSection}>
-                    {rightActions}
-                </View>
+        <View style={styles.container}>
+            <View style={styles.leftSection}>
+                {onBackPress && (
+                    <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
+                        <Ionicons name="arrow-back" size={24} color="#333" />
+                    </TouchableOpacity>
+                )}
             </View>
-        </SafeAreaView>
+
+            <View style={styles.centerSection}>
+                <Text style={styles.title} numberOfLines={1}>
+                    {title}
+                </Text>
+            </View>
+
+            <View style={styles.rightSection}>
+                {rightActions}
+            </View>
+        </View>
     );
 };
 

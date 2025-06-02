@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     ScrollView,
-    Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import AppBar from '../components/AppBar';
@@ -20,11 +19,14 @@ import FloatingSnackbar from '../components/FloatingSnackbar';
 import NetworkErrorScreen from '../components/NetworkErrorScreen';
 import { useMovieSearch } from '../hooks/useMovieSearch';
 import { useNetwork } from '../hooks/useNetwork';
+import { useOrientation } from '../hooks/useOrientation';
 import { MovieFilter } from '../data/models';
 
 const MovieSearchScreen: React.FC = () => {
     const navigation = useNavigation();
     const isNetworkAvailable = useNetwork();
+    const { isLandscape } = useOrientation(); // Add orientation detection
+
     const {
         movieResponse,
         isLoading,
@@ -42,16 +44,16 @@ const MovieSearchScreen: React.FC = () => {
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
-    const { width, height } = Dimensions.get('window');
-    const isLandscape = width > height;
+    // Debug log
+    console.log('MovieSearchScreen orientation:', { isLandscape });
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (movieSaved) {
             setSnackbarMessage('Movie saved to database successfully');
             setShowSnackbar(true);
             resetMovieSaved();
         }
-    }, [movieSaved, resetMovieSaved]);
+    }, [movieSaved]);
 
     const handleSearch = () => {
         if (!searchQuery.trim()) {
@@ -137,7 +139,7 @@ const MovieSearchScreen: React.FC = () => {
     };
 
     const renderSearchControls = () => (
-        <View>
+        <View style={isLandscape ? styles.landscapeControls : styles.portraitControls}>
             <SearchBar
                 value={searchQuery}
                 onChangeText={(text) => {
@@ -148,13 +150,13 @@ const MovieSearchScreen: React.FC = () => {
                 placeholder="Enter movie title"
             />
 
-            <FilterPanel
-                filter={filter}
-                onFilterChange={setFilter}
-                onApplyFilter={handleApplyFilter}
-                expanded={isFilterExpanded}
-                onToggleExpanded={() => setIsFilterExpanded(!isFilterExpanded)}
-            />
+            {isFilterExpanded && (
+                <FilterPanel
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    onApplyFilter={handleApplyFilter}
+                />
+            )}
         </View>
     );
 
@@ -181,25 +183,30 @@ const MovieSearchScreen: React.FC = () => {
                 }
             />
 
-            {isLandscape ? (
-                <View style={styles.landscapeLayout}>
-                    <View style={styles.landscapeControls}>
-                        <ScrollView showsVerticalScrollIndicator={false}>
-                            {renderSearchControls()}
-                        </ScrollView>
+            {/* Force re-render on orientation change */}
+            <View key={`movie-search-${isLandscape}`} style={styles.content}>
+                {isLandscape ? (
+                    // Landscape Layout
+                    <View style={styles.landscapeLayout}>
+                        <View style={styles.landscapeLeft}>
+                            <ScrollView showsVerticalScrollIndicator={false}>
+                                {renderSearchControls()}
+                            </ScrollView>
+                        </View>
+                        <View style={styles.landscapeRight}>
+                            {renderContent()}
+                        </View>
                     </View>
-                    <View style={styles.landscapeContent}>
-                        {renderContent()}
+                ) : (
+                    // Portrait Layout
+                    <View style={styles.portraitLayout}>
+                        {renderSearchControls()}
+                        <View style={styles.portraitContent}>
+                            {renderContent()}
+                        </View>
                     </View>
-                </View>
-            ) : (
-                <View style={styles.portraitLayout}>
-                    {renderSearchControls()}
-                    <View style={styles.portraitContent}>
-                        {renderContent()}
-                    </View>
-                </View>
-            )}
+                )}
+            </View>
 
             <FloatingSnackbar
                 message={snackbarMessage}
@@ -215,8 +222,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FAFAFA',
     },
+    content: {
+        flex: 1,
+    },
     portraitLayout: {
         flex: 1,
+    },
+    portraitControls: {
+        // Portrait specific styles
     },
     portraitContent: {
         flex: 1,
@@ -225,13 +238,17 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
     },
-    landscapeControls: {
+    landscapeLeft: {
         flex: 1,
         paddingRight: 8,
+        maxWidth: '40%', // Limit controls width in landscape
     },
-    landscapeContent: {
+    landscapeRight: {
         flex: 2,
         paddingLeft: 8,
+    },
+    landscapeControls: {
+        // Landscape specific styles
     },
     rightActions: {
         flexDirection: 'row',

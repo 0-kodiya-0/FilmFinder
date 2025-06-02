@@ -4,9 +4,8 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
-    Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import LoadingIndicator from '../components/LoadingIndicator';
@@ -14,6 +13,7 @@ import FloatingSnackbar from '../components/FloatingSnackbar';
 import MovieRepository from '../data/repository/MovieRepository';
 import { PREDEFINED_MOVIES } from '../utils/Constants';
 import { RootStackParamList } from '../navigation/AppNavigator';
+import { useOrientation } from '../hooks/useOrientation';
 
 type MainScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Main'>;
 
@@ -23,8 +23,11 @@ const MainScreen: React.FC = () => {
     const [showSnackbar, setShowSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
 
-    const { width, height } = Dimensions.get('window');
-    const isLandscape = width > height;
+    // Use the orientation hook - this will trigger re-renders on orientation change
+    const { isLandscape, width, height } = useOrientation();
+
+    // Debug log to see if orientation is being detected
+    console.log('MainScreen render:', { isLandscape, width, height });
 
     const handleAddMoviesToDB = async () => {
         setIsAddingMovies(true);
@@ -51,6 +54,7 @@ const MainScreen: React.FC = () => {
             style={[
                 styles.navigationButton,
                 isPrimary && styles.primaryButton,
+                // Apply landscape styles based on current orientation
                 isLandscape && styles.landscapeButton,
             ]}
             onPress={onPress}
@@ -72,16 +76,30 @@ const MainScreen: React.FC = () => {
     );
 
     const AppTitle: React.FC = () => (
-        <View style={[styles.titleContainer, isLandscape && styles.landscapeTitleContainer]}>
-            <Text style={styles.appTitle}>Film Finder</Text>
-            <Text style={styles.appSubtitle}>
+        <View style={[
+            styles.titleContainer,
+            isLandscape && styles.landscapeTitleContainer
+        ]}>
+            <Text style={[
+                styles.appTitle,
+                isLandscape && styles.landscapeAppTitle
+            ]}>
+                Film Finder
+            </Text>
+            <Text style={[
+                styles.appSubtitle,
+                isLandscape && styles.landscapeAppSubtitle
+            ]}>
                 Discover and explore your favorite movies
             </Text>
         </View>
     );
 
     const ButtonList: React.FC = () => (
-        <View style={[styles.buttonContainer, isLandscape && styles.landscapeButtonContainer]}>
+        <View style={[
+            styles.buttonContainer,
+            isLandscape && styles.landscapeButtonContainer
+        ]}>
             <NavigationButton
                 title="Add Movies to DB"
                 onPress={handleAddMoviesToDB}
@@ -105,21 +123,26 @@ const MainScreen: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {isLandscape ? (
-                <View style={styles.landscapeLayout}>
-                    <View style={styles.landscapeLeft}>
-                        <AppTitle />
+            {/* Force re-render by using orientation in the key */}
+            <View key={`orientation-${isLandscape}`} style={styles.content}>
+                {isLandscape ? (
+                    // Landscape Layout
+                    <View style={styles.landscapeLayout}>
+                        <View style={styles.landscapeLeft}>
+                            <AppTitle />
+                        </View>
+                        <View style={styles.landscapeRight}>
+                            <ButtonList />
+                        </View>
                     </View>
-                    <View style={styles.landscapeRight}>
+                ) : (
+                    // Portrait Layout
+                    <View style={styles.portraitLayout}>
+                        <AppTitle />
                         <ButtonList />
                     </View>
-                </View>
-            ) : (
-                <View style={styles.portraitLayout}>
-                    <AppTitle />
-                    <ButtonList />
-                </View>
-            )}
+                )}
+            </View>
 
             <FloatingSnackbar
                 message={snackbarMessage}
@@ -134,6 +157,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FAFAFA',
+    },
+    content: {
+        flex: 1,
     },
     portraitLayout: {
         flex: 1,
@@ -150,15 +176,18 @@ const styles = StyleSheet.create({
     landscapeLeft: {
         flex: 1,
         paddingRight: 24,
+        justifyContent: 'center',
     },
     landscapeRight: {
         flex: 1,
+        justifyContent: 'center',
     },
     titleContainer: {
         alignItems: 'center',
         marginBottom: 48,
     },
     landscapeTitleContainer: {
+        alignItems: 'flex-start', // Align left in landscape
         marginBottom: 0,
     },
     appTitle: {
@@ -166,11 +195,20 @@ const styles = StyleSheet.create({
         fontWeight: '300',
         color: '#1565C0',
         marginBottom: 8,
+        textAlign: 'center',
+    },
+    landscapeAppTitle: {
+        fontSize: 32, // Slightly smaller in landscape
+        textAlign: 'left',
     },
     appSubtitle: {
         fontSize: 16,
         color: '#666',
         textAlign: 'center',
+    },
+    landscapeAppSubtitle: {
+        textAlign: 'left',
+        fontSize: 14,
     },
     buttonContainer: {
         width: '100%',
@@ -178,6 +216,8 @@ const styles = StyleSheet.create({
     },
     landscapeButtonContainer: {
         justifyContent: 'center',
+        alignItems: 'stretch',
+        width: '100%',
     },
     navigationButton: {
         backgroundColor: '#fff',
@@ -196,7 +236,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     landscapeButton: {
-        maxWidth: 300,
+        marginBottom: 12, // Reduce spacing in landscape
+        minHeight: 48,    // Smaller height in landscape
     },
     primaryButton: {
         backgroundColor: '#E3F2FD',
